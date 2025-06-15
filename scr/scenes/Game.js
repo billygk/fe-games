@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import { COLORS } from "../constants";
-import { cloneElement } from "react";
 
 class Game extends Phaser.Scene {
     preload() {
@@ -64,8 +63,8 @@ class Game extends Phaser.Scene {
         }
 
         // Keep the right rectangle (computer-controlled) centered on the ball
-        this.rectangleRight.y = this.ball.y;
-        this.rectangleRight.body.updateFromGameObject();
+        // this.rectangleRight.y = this.ball.y;
+        // this.rectangleRight.body.updateFromGameObject();
 
         //score left and right
         if (this.ball.x < -50) {
@@ -94,11 +93,32 @@ class Game extends Phaser.Scene {
         console.log(`New Velocity: (${newVelocityX}, ${newVelocityY})`);
     }
 
-    resetBall() {
-        this.ball.setPosition(400, 250);
-        const angle = Phaser.Math.Between(0, 360);
-        const vec = this.physics.velocityFromAngle(angle,200)
-        this.ball.body.setVelocity(vec.x, vec.y)
+    resetBall(x, y, velocityX, velocityY) {
+        if (x !== undefined && y !== undefined && velocityX !== undefined && velocityY !== undefined) {
+            this.ball.setPosition(x, y);
+            this.ball.body.setVelocity(velocityX, velocityY);
+        } else {
+            this.ball.setPosition(400, 250);
+            const angle = Phaser.Math.Between(0, 360);
+            const vec = this.physics.velocityFromAngle(angle, 200);
+            this.ball.body.setVelocity(vec.x, vec.y);
+        }
+    }
+
+    setRightPaddleY(y_position) {
+        this.rectangleRight.y = y_position;
+        this.rectangleRight.body.updateFromGameObject();
+    }
+
+    setBallData(x_position, y_position, x_velocity, y_velocity) {
+        this.ball.setPosition(x_position, y_position);
+        this.ball.body.setVelocity(x_velocity, y_velocity);
+    }
+
+    setScores(scoreLeft, scoreRight) {
+        this.scoreLeft = scoreLeft;
+        this.scoreRight = scoreRight;
+        this.scoreText.setText(`${this.scoreLeft} - ${this.scoreRight}`);
     }
 }
 export default Game
