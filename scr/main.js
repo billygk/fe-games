@@ -18,6 +18,6 @@ const config = {
 const game = new Phaser.Game(config)
 game.scene.add('titlescreen', TitleScreen)
 game.scene.add('circle', Game)
-// game.scene.start('titlescreen')
-game.scene.start('circle')
+game.scene.start('titlescreen')
+// game.scene.start('circle')
 
