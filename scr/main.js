@@ -127,7 +127,7 @@ function sendPlayerMove(y) {
     if (ws && ws.readyState === WebSocket.OPEN) {
         const message = {
             type: 'player-move',
-            y: y
+            payload: {y: y}
         };
         ws.send(JSON.stringify(message));
     }
