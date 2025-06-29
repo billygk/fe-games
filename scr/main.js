@@ -9,7 +9,15 @@ const config = {
         create: create,
         update: update
     },
-    paddleSpeed: 5
+    paddle: {
+        speed: 5,
+        width: 20,
+        height: 100, 
+    },
+    ball: {
+        size: 10,
+        speed: 10
+    }
 };
 
 const game = new Phaser.Game(config);
@@ -30,11 +38,12 @@ function preload() {
 }
 
 function create() {    
+
     // Create visual representations of game objects.
     // Their positions will be set by the server's 'game-state' messages.
-    player1 = this.add.rectangle(30, 300, 20, 100, 0xffffff);
-    player2 = this.add.rectangle(770, 300, 20, 100, 0xffffff);
-    ball = this.add.rectangle(400, 300, 20, 20, 0xffffff);
+    player1 = this.add.rectangle(30, 300, config.paddle.width, config.paddle.height, 0xffffff);
+    player2 = this.add.rectangle(770, 300, config.paddle.width, config.paddle.height, 0xffffff);
+    ball = this.add.rectangle(400, 300, config.ball.size, config.ball.size, 0xffffff);
 
     // Score
     scoreText = this.add.text(350, 20, '0 - 0', { fontSize: '48px', fill: '#fff' });
@@ -65,8 +74,19 @@ function create() {
                 } else {
                     player2.setFillStyle(0x00ff00); // Green
                 }                
-                config.paddleSpeed = data.settings.paddleSpeed ?? config.paddleSpeed;
+                config.paddle.speed = data.settings.paddleSpeed ?? config.paddle.speed;
+                config.paddle.width = data.settings.paddleWidth ?? config.paddle.width;
+                config.paddle.height = data.settings.paddleHeight ?? config.paddle.height;
+                config.ball.size = data.settings.ballSize ?? config.ball.size; 
+                // Create visual representations of game objects.
+                // Their positions will be set by the server's 'game-state' messages.
+                player1.setSize(config.paddle.width, config.paddle.height);
+                player2.setSize(config.paddle.width, config.paddle.height);
+                ball.setSize(config.ball.size, config.ball.size);
+                
                 break;
+            
+            
 
             case 'game-state':
                 // Update all game object positions and score based on server data
@@ -107,11 +127,11 @@ function update() {
     // For a smoother experience, we can apply movement locally first (client-side prediction)
     // and then send the new state. The server's 'game-state' will ultimately be the source of truth.
     if (cursors.up.isDown && myPaddle.y > myPaddle.height / 2) {
-        myPaddle.y -= config.paddleSpeed;
+        myPaddle.y -= config.paddle.speed;
         moved = true;
     }
     if (cursors.down.isDown && myPaddle.y < config.height - myPaddle.height / 2) {
-        myPaddle.y += config.paddleSpeed;
+        myPaddle.y += config.paddle.speed;
         moved = true;
     }
 
@@ -134,3 +154,4 @@ function sendPlayerMove(y) {
         ws.send(JSON.stringify(message));
     }
 }
+
