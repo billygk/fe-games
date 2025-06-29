@@ -8,7 +8,8 @@ const config = {
         preload: preload,
         create: create,
         update: update
-    }
+    },
+    paddleSpeed: 5
 };
 
 const game = new Phaser.Game(config);
@@ -63,7 +64,8 @@ function create() {
                     player1.setFillStyle(0x00ff00); // Green
                 } else {
                     player2.setFillStyle(0x00ff00); // Green
-                }
+                }                
+                config.paddleSpeed = data.settings.paddleSpeed ?? config.paddleSpeed;
                 break;
 
             case 'game-state':
@@ -105,11 +107,11 @@ function update() {
     // For a smoother experience, we can apply movement locally first (client-side prediction)
     // and then send the new state. The server's 'game-state' will ultimately be the source of truth.
     if (cursors.up.isDown && myPaddle.y > myPaddle.height / 2) {
-        myPaddle.y -= 5;
+        myPaddle.y -= config.paddleSpeed;
         moved = true;
     }
     if (cursors.down.isDown && myPaddle.y < config.height - myPaddle.height / 2) {
-        myPaddle.y += 5;
+        myPaddle.y += config.paddleSpeed;
         moved = true;
     }
 
