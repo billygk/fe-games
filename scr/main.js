@@ -124,11 +124,11 @@ function update() {
 
     // For a smoother experience, we can apply movement locally first (client-side prediction)
     // and then send the new state. The server's 'game-state' will ultimately be the source of truth.
-    if (cursors.up.isDown && myPaddle.y > myPaddle.height / 2) {
+    if (cursors.up.isDown && myPaddle.y > 0 + myPaddle.height) {
         myPaddle.y -= config.paddle.speed;
         moved = true;
     }
-    if (cursors.down.isDown && myPaddle.y < config.height - myPaddle.height / 2) {
+    if (cursors.down.isDown && myPaddle.y < config.height - myPaddle.height) {
         myPaddle.y += config.paddle.speed;
         moved = true;
     }
