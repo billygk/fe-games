@@ -86,8 +86,6 @@ function create() {
                 
                 break;
             
-            
-
             case 'game-state':
                 // Update all game object positions and score based on server data
                 player1.y = data.player1.y;
