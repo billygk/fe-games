@@ -80,12 +80,19 @@ function create() {
                 config.ball.size = data.settings.ballSize ?? config.ball.size; 
                 // Create visual representations of game objects.
                 // Their positions will be set by the server's 'game-state' messages.
+                player1.setPosition(data.settings.initialPlayer1.x, data.settings.initialPlayer1.y);
                 player1.setSize(config.paddle.width, config.paddle.height);
+
+                player2.setPosition(data.settings.initialPlayer2.x, data.settings.initialPlayer2.y);
                 player2.setSize(config.paddle.width, config.paddle.height);
+                
+                ball.setPosition(data.settings.initialBall.x, data.settings.initialBall.y)
                 ball.setSize(config.ball.size, config.ball.size);
                 
                 break;
             
+            
+
             case 'game-state':
                 // Update all game object positions and score based on server data
                 player1.y = data.player1.y;
@@ -124,11 +131,11 @@ function update() {
 
     // For a smoother experience, we can apply movement locally first (client-side prediction)
     // and then send the new state. The server's 'game-state' will ultimately be the source of truth.
-    if (cursors.up.isDown && myPaddle.y > 0 + myPaddle.height) {
+    if (cursors.up.isDown && myPaddle.y > myPaddle.height / 2) {
         myPaddle.y -= config.paddle.speed;
         moved = true;
     }
-    if (cursors.down.isDown && myPaddle.y < config.height - myPaddle.height) {
+    if (cursors.down.isDown && myPaddle.y < config.height - myPaddle.height / 2) {
         myPaddle.y += config.paddle.speed;
         moved = true;
     }
