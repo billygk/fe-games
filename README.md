@@ -1,8 +1,5 @@
 # fe-games
 
-multiple games in one repository
-each game in a separated branch
-
 ## Pong game
 
 **description**: A simple Pong game implemented in JavaScript using Phaser.js. It has a user-controlled paddle and an AI-controlled opponent paddle. The game keeps track of the score and displays it on the screen.
