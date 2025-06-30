@@ -2,9 +2,7 @@
 
 ## Pong game
 
-**description**: A simple Pong game implemented in JavaScript using Phaser.js. It has a user-controlled paddle and an AI-controlled opponent paddle. The game keeps track of the score and displays it on the screen.
-
-Our goal is to implement a multiplayer version of the game using WebSockets, so that two players can play against each other in real-time through a web browser.
+**description**: A simple Pong game implemented in JavaScript using Phaser.js. The game keeps track of the score and displays it on the screen. Our goal is to implement a multiplayer version of the game using WebSockets, so that two players can play against each other in real-time through a web browser.
 
 
 ![Image description](./pong-game-snapshot.png)
