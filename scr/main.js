@@ -3,20 +3,19 @@ const config = {
     width: 800,
     height: 600,
     backgroundColor: '#000000',
-    // Physics is handled by the server, so we don't need it on the client.
     scene: {
         preload: preload,
         create: create,
         update: update
     },
+    // Client-side config is now minimal, server settings are the source of truth
     paddle: {
         speed: 5,
-        width: 20,
+        width: 15,
         height: 100, 
     },
     ball: {
         size: 10,
-        speed: 10
     }
 };
 
@@ -29,31 +28,22 @@ let scoreText;
 let connectingText;
 
 // Multiplayer state
-let myPlayerKey = null; // Will be 'player1' or 'player2'
+let myPlayerKey = null;
 let ws;
 
-function preload() {
-    // In a real game, you'd load assets here.
-    // For this example, we're using simple shapes.
-}
+function preload() {}
 
 function create() {    
+    // Create visual representations. Positions and sizes will be set by the server.
+    player1 = this.add.rectangle(0, 0, config.paddle.width, config.paddle.height, 0xffffff);
+    player2 = this.add.rectangle(0, 0, config.paddle.width, config.paddle.height, 0xffffff);
+    ball = this.add.rectangle(0, 0, config.ball.size, config.ball.size, 0xffffff);
 
-    // Create visual representations of game objects.
-    // Their positions will be set by the server's 'game-state' messages.
-    player1 = this.add.rectangle(30, 300, config.paddle.width, config.paddle.height, 0xffffff);
-    player2 = this.add.rectangle(770, 300, config.paddle.width, config.paddle.height, 0xffffff);
-    ball = this.add.rectangle(400, 300, config.ball.size, config.ball.size, 0xffffff);
-
-    // Score
     scoreText = this.add.text(350, 20, '0 - 0', { fontSize: '48px', fill: '#fff' });
     connectingText = this.add.text(250, 250, 'Connecting to server...', { fontSize: '24px', fill: '#fff' });
 
-    // Input
     cursors = this.input.keyboard.createCursorKeys();
 
-    // --- WebSocket Connection ---
-    // This is the address of the backend server we will build later.
     ws = new WebSocket('ws://localhost:8080/pong');
 
     ws.onopen = () => {
@@ -68,19 +58,15 @@ function create() {
             case 'player-assignment':
                 myPlayerKey = data.player;
                 console.log(`You are ${myPlayerKey}`);
-                // Highlight the player's paddle
-                if (myPlayerKey === 'player1') {
-                    player1.setFillStyle(0x00ff00); // Green
-                } else {
-                    player2.setFillStyle(0x00ff00); // Green
-                }                
-                config.paddle.speed = data.settings.paddleSpeed ?? config.paddle.speed;
-                config.paddle.width = data.settings.paddleWidth ?? config.paddle.width;
-                config.paddle.height = data.settings.paddleHeight ?? config.paddle.height;
-                config.ball.size = data.settings.ballSize ?? config.ball.size; 
-                // Create visual representations of game objects.
-                // Their positions will be set by the server's 'game-state' messages.
-                player1.setPosition(data.settings.initialPlayer1.x, data.settings.initialPlayer1.y);
+                
+                // Use settings from server to configure the client
+                const settings = data.settings;
+                config.paddle.speed = settings.paddleSpeed;
+                config.paddle.width = settings.paddleWidth;
+                config.paddle.height = settings.paddleHeight;
+                config.ball.size = settings.ballSize;
+                
+                // Apply sizes
                 player1.setSize(config.paddle.width, config.paddle.height);
 
                 player2.setPosition(data.settings.initialPlayer2.x, data.settings.initialPlayer2.y);
@@ -89,16 +75,33 @@ function create() {
                 ball.setPosition(data.settings.initialBall.x, data.settings.initialBall.y)
                 ball.setSize(config.ball.size, config.ball.size);
                 
+                // Set initial positions. Phaser will use these for the center of the rectangle.
+                // We need to adjust for this when receiving and sending data.
+                player1.x = settings.initialPlayer1.x + config.paddle.width / 2;
+                player1.y = settings.initialPlayer1.y + config.paddle.height / 2;
+                player2.x = settings.initialPlayer2.x + config.paddle.width / 2;
+                player2.y = settings.initialPlayer2.y + config.paddle.height / 2;
+                ball.x = settings.initialBall.x + config.ball.size / 2;
+                ball.y = settings.initialBall.y + config.ball.size / 2;
+
+
+                if (myPlayerKey === 'player1') {
+                    player1.setFillStyle(0x00ff00);
+                } else {
+                    player2.setFillStyle(0x00ff00);
+                }                
                 break;
             
             
 
             case 'game-state':
-                // Update all game object positions and score based on server data
-                player1.y = data.player1.y;
-                player2.y = data.player2.y;
-                ball.x = data.ball.x;
-                ball.y = data.ball.y;
+                // Adjust incoming top-left coords to center coords for rendering 
+                player1.x = data.player1.x + config.paddle.width / 2;
+                player1.y = data.player1.y + config.paddle.height / 2;
+                player2.x = data.player2.x + config.paddle.width / 2;
+                player2.y = data.player2.y + config.paddle.height / 2;
+                ball.x = data.ball.x + config.ball.size / 2;
+                ball.y = data.ball.y + config.ball.size / 2;
                 scoreText.setText(`${data.score.player1} - ${data.score.player2}`);
                 break;
         }
@@ -121,7 +124,6 @@ function create() {
 }
 
 function update() {
-    // We only send input if we have a WebSocket connection and have been assigned a player.
     if (!ws || ws.readyState !== WebSocket.OPEN || !myPlayerKey) {
         return;
     }
@@ -129,26 +131,29 @@ function update() {
     const myPaddle = (myPlayerKey === 'player1') ? player1 : player2;
     let moved = false;
 
-    // For a smoother experience, we can apply movement locally first (client-side prediction)
-    // and then send the new state. The server's 'game-state' will ultimately be the source of truth.
-    if (cursors.up.isDown && myPaddle.y > myPaddle.height / 2) {
+    // Boundary checks to use the paddle's center and height 
+    if (cursors.up.isDown && myPaddle.y > (config.paddle.height / 2)) {
         myPaddle.y -= config.paddle.speed;
         moved = true;
     }
-    if (cursors.down.isDown && myPaddle.y < config.height - myPaddle.height / 2) {
+    if (cursors.down.isDown && myPaddle.y < (config.height - (config.paddle.height / 2))) {
         myPaddle.y += config.paddle.speed;
         moved = true;
     }
 
-    // Only send a message if the paddle has actually moved
     if (moved) {
-        sendPlayerMove(myPaddle.y);
+        // Clamp position to prevent client-side prediction from going out of bounds
+        myPaddle.y = Phaser.Math.Clamp(myPaddle.y, config.paddle.height / 2, config.height - config.paddle.height / 2);
+        
+        // Convert center y-coordinate to top-left before sending
+        const topLeftY = myPaddle.y - (config.paddle.height / 2);
+        sendPlayerMove(topLeftY);
     }
 }
 
 /**
- * Sends the player's paddle position to the server.
- * @param {number} y The new y-coordinate of the paddle.
+ * Sends the player's top-left y-coordinate to the server.
+ * @param {number} y The new top-left y-coordinate of the paddle.
  */
 function sendPlayerMove(y) {
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -159,4 +164,3 @@ function sendPlayerMove(y) {
         ws.send(JSON.stringify(message));
     }
 }
-
